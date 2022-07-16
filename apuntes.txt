@@ -1,0 +1,36 @@
+func nextChild(){
+	parent = elementBox
+
+	si parent.focus < len(parent.child)-1{
+		parent.focus++
+		if parent.focus != editable || parent.focus != clicable {
+			nextChild()
+			}
+		if parent.focus == box entonces{
+			parent = parent.focus
+		}
+	}else{
+		parent.focus = 0
+	}
+
+	parent.Focus()
+			
+}
+func (b *box) NextChild(){
+	if b.focus < len(b.Childs)-1 {
+		b.focus++
+		if !b.Childs[b.focus].IsEditable() || !b.Childs[b.focus].IsClickable(){
+			b.NextChild()
+		}else if b.Childs[b.focus].IsBox(){
+			b.Childs[b.focus].(*box).NextChild()
+		}
+	}else{
+		b.focus = 0
+		if !b.Childs[b.focus].IsEditable() || !b.Childs[b.focus].IsClickable(){
+			b.NextChild()
+		}else if b.Childs[b.focus].IsBox(){
+			b.Childs[b.focus].(*box).NextChild()
+		}
+	}
+	b.Focus()
+}

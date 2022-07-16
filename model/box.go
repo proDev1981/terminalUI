@@ -12,12 +12,12 @@ func Box(name string, style Style, childs ...element)*box{
 // methods inside interface element
 func (b *box) Render(){
 	// clean window
-	Clean2()
 	// draw element
-	DrawElement(&b.Style, "", nil)
+	DrawElement(&b.Style, "", b.Parent())
 	// render childs
-	for _,child := range b.childs{
+	for index, child := range b.childs{
 		child.SetParent(b)
+		child.SetOrder(index)
 		child.Render()
 	}
 	b.childs[b.focus].Focus()
@@ -25,7 +25,12 @@ func (b *box) Render(){
 }
 
 func (b *box) Focus(){
-	b.childs[b.focus].Focus()
+	child := b.childs[b.focus]
+	if IsFocusable(child){ 
+		child.Focus() 
+	}else{
+		b.NextChild()
+	}
 }
 
 func (b *box) IsEditable()bool{
@@ -34,6 +39,10 @@ func (b *box) IsEditable()bool{
 
 func (b *box) IsClickable()bool{
 	return b.childs[b.focus].IsClickable()
+}
+
+func (b *box) IsBox()bool{
+	return true
 }
 
 func (b *box) Click(){
@@ -64,22 +73,36 @@ func (b *box) Select(name string)element{
 	return nil
 }
 
+
 func (b *box) NextChild(){
-	if b.focus < len(b.childs)-1 { 
+
+	switch {
+	case b.InRange() :
 		b.focus++
-		child := b.childs[b.focus]
-		if child.IsEditable() || child.IsClickable(){
-			b.childs[b.focus].Focus()
-		}else{
-			b.NextChild()
+
+	case b.childs[b.focus].IsBox() :
+		if b.childs[b.focus].(*box).InLastSon() {
+			b.childs[b.focus].(*box).focus = 0
+			if b.InRange(){ b.focus++ } else { b.focus = 0 }
+		}else if b.childs[b.focus].(*box).InRange(){
+			b.childs[b.focus].(*box).NextChild()
 		}
-	}else{
-		b.focus = 0		
-		child := b.childs[b.focus]
-		if child.IsEditable() || child.IsClickable(){
-			b.childs[b.focus].Focus()
-		}else{
-			b.NextChild()
-		}
+
+	default:
+		b.focus = 0
 	}
+	b.Focus()
 }
+
+func (b *box) InLastSon()bool{
+	return b.focus == len(b.childs)-1
+}
+
+func (b *box) InRange()bool{
+	return b.focus < len(b.childs)-1
+}
+
+func (b *box) GetChilds()[]element{
+	return b.childs
+}
+

@@ -39,6 +39,8 @@ type element interface{
 	Name()string
 	IsEditable()bool
 	IsClickable()bool
+	IsBox()bool
+	IsFocusable()bool
 	Click()
 	SetValue(string)bool
 	GetValue()string
@@ -51,6 +53,14 @@ type element interface{
 	GetStyle()*Style
 	SetStatus(int)
 	GetStatus()int
+	GetOrder()int
+	SetOrder(int)
+	GetMarginLeft()int
+	GetMarginRight()int
+	GetMarginBotton()int
+	GetMarginTop()int
+
+
 }
 // structs
 type Hover struct{
@@ -60,16 +70,21 @@ type Hover struct{
 	Border bool
 }
 
+
+
 type Style struct{
+	tag string
 	Width, Height int
 	Background, Color string
 	X, Y int
+	order int
 	focus_x, focus_y int
+	Margin string
 	Border []string
 	Position string
 	Align string
 	Justify string
-	relatived bool
+	Built bool
 	Hover
 }
 
