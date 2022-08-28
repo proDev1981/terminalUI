@@ -9,7 +9,7 @@ type statusBar struct{
 }
 
 func Bar(name string, s Style)*statusBar{
-	return &statusBar{Element{name, s, "", nil},0,""}
+  return &statusBar{Element:Element{ name:name, Style:s, Listeners:DEFAULT_LISTENERS}}
 }
 
 func (this *statusBar) Render(){

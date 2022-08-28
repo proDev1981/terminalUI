@@ -5,11 +5,19 @@ type toggle struct{
 	Element
 	label string
 	state bool
-	OnClick func(e Event)
 }
 
 func Toggle(name string, s Style, label string, f func(Event))*toggle{
-	return &toggle{Element{name, s, "☐", nil},label, false, f}
+  return &toggle{Element{
+    name:name, 
+    Style:s, 
+    value:"☐", 
+    Listeners:Listeners{ 
+      onClick:f,
+      onInside: func(e Event){},
+      onOutside: func(e Event){},
+    },
+  },label, false}
 }
 
 func (this *toggle) Render(){
@@ -34,5 +42,5 @@ func (this *toggle) SetState(){
 
 func (this *toggle) Click(){
 	this.SetState()
-	this.OnClick(Event{"click", this})
+	this.onClick(Event{"click", this})
 }

@@ -3,27 +3,17 @@ package model
 import "strings"
 import "fmt"
 import "os"
+import "os/exec"
 import "strconv"
 import k "github.com/eiannone/keyboard"
+import "assets"
 
 // functions 
-
-func Clean(c, f int){
-	MoveCursor(0, 0)
-	Colored(B_BLACK)
-	line := strings.Repeat(" ",f)
-	print(line)
-	row := 0
-	for row < c {
-		print(row)
-		MoveCursor(0, row)
-		print(line)
-		row++
-	}
-}
-
-func Clean2(){
-	print("\033[2K")
+func Clear(){
+  cmd := exec.Command("clear")
+  cmd.Stdout = os.Stdout
+  err := cmd.Run()
+  assets.Throw(err, "", nil)
 }
 
 func align(s *Style)int{
@@ -81,19 +71,29 @@ func SetHeight(x, y, width, height int, border []string){
 }
 
 func DrawElement(s *Style, value string, parent element){
+  var border []string
 	if s.Position == "" { s.Position = "static" } // manterner hasta que haga un objeto style standar
 	isRelative(s, parent)
 	isStatic(s, parent)
 	MoveCursor(s.X, s.Y)
 	if s.Background != "" { Colored(s.Background) }
+	if s.Color      != "" { Colored(s.Color) }
 	if len(value) > s.Width { s.Width = len(value)}
-	SetHeight(s.X, s.Y, s.Width, s.Height, s.Border)
+  if s.Border == "radius" { border = BORDER_RADIUS }
+  if s.Border == "default" { border = BORDER_DEFAULT }
+  if s.BorderColor != "" { Colored(s.BorderColor) }
+	SetHeight(s.X, s.Y, s.Width, s.Height, border)
 	s.focus_x = justify(s, value)
 	s.focus_y = align(s)
 	MoveCursor(s.focus_x, s.focus_y)
-	if s.Color      != "" { Colored(s.Color) }
+  if value == ""{
+    Colored(s.PlayholderColor)
+    print(s.Playholder)
+  }
+  Colored(s.Color)
 	print(value)
 	ResetColors()
+  //print(s.X,":",s.Y)
 }
 
 func isRelative(s *Style, parent element){
@@ -109,6 +109,7 @@ func isRelative(s *Style, parent element){
 
 func isStatic(s *Style, parent element){
 	var s2 *Style
+  line := 0
 	if parent != nil {
 		if s.Position == "static" && !s.Built {
 			p := parent.GetStyle()
@@ -121,16 +122,29 @@ func isStatic(s *Style, parent element){
 				s.X += p.X + GetMarginLeft(s)
 				s.Y += p.Y + GetMarginTop(s)
 			}else{
+        if parent.GetStyle().Line != 0 {
+          line = parent.GetStyle().Line
+        }else{ line = p.Y }
 				s.X += s2.X + s2.Width + GetMarginLeft(s) + GetMarginRight(s2)
-				s.Y += p.Y + GetMarginLeft(s)
+				s.Y += line + GetMarginTop(s)
 			}
-			if s.X > p.Width + p.X {
-				s.X = p.X + GetMarginLeft(s) + GetMarginRight(s2)
-				s.Y = s2.Y + GetMarginTop(s) + s2.Height
-			}
+      if s.X + s.Width > p.Width + p.X {
+        parent.GetStyle().Line = GetMaxHeight(parent)
+        s.X = p.X + GetMarginLeft(s)
+        s.Y = parent.GetStyle().Line + GetMarginTop(s)
+      }
 			s.Built = true
 		}
 	}
+}
+func GetMaxHeight(parent element)int{
+  maxHeight := 0
+  for _,item := range parent.(*box).childs{
+    
+    totalHeight := item.GetStyle().Y + item.GetStyle().Height 
+    if totalHeight > maxHeight { maxHeight = totalHeight}
+  }
+  return maxHeight
 }
 
 func ResetColors(){
@@ -147,6 +161,9 @@ func Loop(b *box, f func()){
 		char, key, _ := k.GetKey()
 		switch key {
 			case k.KeyEsc:
+        ResetColors()
+        //Clear()
+        Exit()
 				return
 			case k.KeyTab:
 				b.NextChild()
@@ -299,4 +316,60 @@ func GetMarginTop(s *Style)(res int){
 		res, _ = strconv.Atoi(strMargin[0])
 	}
 	return
+}
+
+func GetSizeTerminal()(res []int){
+  cmd := exec.Command("stty", "size")
+  cmd.Stdin = os.Stdin
+  out, err := cmd.Output()
+  assets.Throw(err, "", nil)
+  splitOut := strings.Split(string(out), " ")
+  for _, item := range splitOut{
+    item = strings.Trim(item, "\n ")
+    num , err := strconv.Atoi(item)
+    assets.Throw(err, "error al convertir string a intteger.", nil)
+    res = append(res, num)
+  }
+  return res
+}
+func UploadStyles(ori , dest *Style){
+  if dest != nil{
+    if dest.Width  != 0{ ori.Width  = dest.Width }
+    if dest.Height != 0{ ori.Height = dest.Height }
+    if dest.Background  != "" { ori.Background  = dest.Background }
+    if dest.Color  != "" { ori.Color  = dest.Color }
+    if dest.Margin  != "" { ori.Margin  = dest.Margin }
+    if dest.Border  != "" { ori.Border  = dest.Border }
+    if dest.Position  != "" { ori.Position  = dest.Position }
+    if dest.Align  != "" { ori.Align  = dest.Align }
+    if dest.Justify  != "" { ori.Justify  = dest.Justify }
+    if dest.Playholder  != "" { ori.Playholder  = dest.Playholder }
+    if dest.PlayholderColor  != "" { ori.PlayholderColor  = dest.PlayholderColor }
+    if dest.BorderColor != "" { ori.BorderColor = dest.BorderColor }
+  }
+}
+
+func X100(porcent, parent int)int{
+  return parent*porcent/100
+}
+
+func TWidth()int{
+  return GetSizeTerminal()[1]
+}
+
+func THeight()int{
+  return GetSizeTerminal()[0]
+}
+
+func Enter(){
+  fmt.Println("\033[?1049h")
+}
+
+func Exit(){
+  fmt.Println("\033[?1049l")
+}
+
+func InitApp(e element){
+  Enter()
+  e.Render()
 }

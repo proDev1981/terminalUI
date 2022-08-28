@@ -1,6 +1,8 @@
 package model
 
-
+var DEFAULT_LISTENERS = Listeners{ func(s Event){}, func(e Event){}, func(e Event){} }
+var	BORDER_DEFAULT []string = []string{"┌","┐","└","┘","─","│"}
+var BORDER_RADIUS []string = []string{"╭","╮","╰","╯","─","│"}
 
 const(
 	B_GREEN 		= "\033[42m"
@@ -30,7 +32,6 @@ const(
 
 )
 
-var	BORDER_DEFAULT []string = []string{"┌","┐","└","┘","─","│"}
 
 // interfaces
 type element interface{
@@ -42,6 +43,11 @@ type element interface{
 	IsBox()bool
 	IsFocusable()bool
 	Click()
+  Inside()
+  Outside()
+  OnClick(func (Event))
+  OnInside(func(Event))
+  OnOutside(func(Event))
 	SetValue(string)bool
 	GetValue()string
 	DelValue()
@@ -59,18 +65,16 @@ type element interface{
 	GetMarginRight()int
 	GetMarginBotton()int
 	GetMarginTop()int
-
+  UploadStyles(string)
+  AddListener(types string, f func(e Event))
 
 }
-// structs
-type Hover struct{
-	Width, Height int
-	Background, Color string
-	X, Y int
-	Border bool
+
+type Listeners struct{
+  onClick func(Event)
+  onInside func(Event)
+  onOutside func(Event)
 }
-
-
 
 type Style struct{
 	tag string
@@ -80,11 +84,16 @@ type Style struct{
 	order int
 	focus_x, focus_y int
 	Margin string
-	Border []string
+	Border string
+  BorderColor string
 	Position string
 	Align string
 	Justify string
 	Built bool
-	Hover
+	Inside *Style
+  Outside *Style
+  Line int
+  Playholder string
+  PlayholderColor string
 }
 

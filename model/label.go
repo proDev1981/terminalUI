@@ -7,6 +7,6 @@ type label struct{
 }
 
 func Label(name string, css Style, value string)*label{
-	return &label{Element{name, css, value, nil}} 
+  return &label{Element{name:name, Style:css, value:value, Listeners:DEFAULT_LISTENERS}} 
 }
 

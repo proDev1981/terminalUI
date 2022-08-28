@@ -1,30 +1,30 @@
 package main
 
-
-import m 	"framework/model"
-import 		"fmt"
-
+import m "framework/model"
+import "fmt"
 
 
 func main(){
 
-	b := m.Box("box1", m.ClassBox,
-			m.Label("label1", m.Class, "Password"),
-			m.Button("btn1", m.Class, "aceptar", IncrementStatusBar),
-			m.StatusBar("status-bar", "0", "%"),
-			m.StatusBar("status-bar2", "0","$"),
+	b := m.Box("box1", m.Body,
+                m.Label("Titulo", m.Tittle, "Add new item"),
+                m.Input("name", m.InputText, "", " Name.."),
+                m.Input("apellidos", m.InputText, "", " Apellidos.."),
+                m.Input("edad", m.InputText, "", " Edad.."),
+                m.Input("telefono", m.InputText, "", " Telefono.."),
+			          m.Button("btn1", m.Btn, "Save", SaveData),
 	)
-	b.Render()
+	m.InitApp(b)
 	m.Loop(b, func(){})
 
 }
-
-func IncrementStatusBar(e m.Event){
-	parent := e.Target.Parent()
-	statusBar := parent.Select("status-bar").Select("bar-status-bar")
-	porcent := parent.Select("status-bar").Select("porcent-status-bar")
-	statusBar.SetStatus(statusBar.GetStatus()+1)
-	porcent.SetValue(fmt.Sprint(statusBar.GetStatus()))
+func SaveData(e m.Event){
+  parent := e.Target.Parent()
+  name := parent.Select("name").GetValue()
+  apellidos := parent.Select("apellidos").GetValue()
+  edad := parent.Select("edad").GetValue()
+  telefono := parent.Select("telefono").GetValue()
+  fmt.Println(name, apellidos, edad, telefono)
 }
 
 

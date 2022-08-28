@@ -8,10 +8,12 @@ type Element struct{
 	Style
 	value string
 	parent element
+  Listeners
+  prev *Element
 }
 // methods
-func NewElement(name string, css Style, value string)*Element{
-	return &Element{name, css, value, nil} 
+func NewElement(name string, css Style, value string, listener Listeners)*Element{
+  return &Element{name:name, Style:css, value:value, Listeners:listener } 
 }
 
 func (this *Element) Render(){
@@ -19,7 +21,16 @@ func (this *Element) Render(){
 }
 
 func (this *Element) Focus(){
+
+  parent := this.Parent().(*box)
+  if parent.prev != nil{
+    parent.prev.Outside()
+  }
+  parent.prev = this
 	MoveCursor(this.focus_x, this.focus_y)
+  this.Inside()
+  if this.Background != "" { Colored(this.Background) }
+  if this.Color != "" { Colored(this.Color) }
 }
 
 
@@ -44,12 +55,54 @@ func (this *Element) IsBox()bool{
 }
 
 func (this *Element) IsFocusable()bool{
-	return 	this.IsEditable() || 
-			this.IsClickable() || 
-			this.IsBox()  
+  return this.IsEditable() || this.IsClickable() || this.IsBox()
 }
 
-func (this *Element) Click(){}
+func (this *Element) UploadStyles(types string){
+  if types == "inside"{
+    UploadStyles(&this.Style, this.Style.Inside)
+  }
+  if types == "outside"{
+    UploadStyles(&this.Style, this.Style.Outside)
+  }
+}
+
+func (this *Element) AddListener(types string, f func(e Event)){
+  switch types{
+  case "click":
+    this.onClick = f
+  case "inside":
+    this.onInside = f
+  case "outside":
+    this.onOutside = f
+  }
+}
+
+func (this *Element) Click(){
+	this.onClick(Event{"click", this})
+	this.Focus()
+}
+func (this *Element) OnClick(f func (e Event)){
+  this.onClick = f
+}
+
+func (this *Element) Inside(){
+  this.UploadStyles("inside")
+  this.Render()
+  this.onInside(Event{"inside", this})
+}
+func (this *Element) OnInside(f func (e Event)){
+  this.onInside = f
+}
+
+func (this *Element) Outside(){
+  this.UploadStyles("outside")
+  this.Render()
+  this.onOutside(Event{"outside", this})
+}
+func (this *Element) OnOutside(f func (e Event)){
+  this.onOutside = f
+}
 
 func (this *Element)SetValue(v string)bool{
 	this.value = v
